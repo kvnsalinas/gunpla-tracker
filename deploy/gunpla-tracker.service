@@ -1,0 +1,16 @@
+[Unit]
+Description=Gunpla Registry — MS collection & build status log
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Projects/gunpla-tracker
+# Use an ABSOLUTE interpreter path. A pyenv shim (~/.pyenv/shims/python3)
+# resolves through PATH, which systemd does not set up the way an interactive
+# login shell does — point at ~/.pyenv/versions/<version>/bin/python3 instead.
+ExecStart=/usr/bin/python3 app.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

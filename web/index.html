@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05080a">
+<title>GUNPLA REGISTRY // MS DEPLOYMENT LOG</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="crt" aria-hidden="true"></div>
+
+<!-- ══════════ COCKPIT BOOT SEQUENCE ══════════ -->
+<div id="boot" class="boot" aria-hidden="true">
+  <div class="boot__shutter boot__shutter--top"></div>
+  <div class="boot__shutter boot__shutter--bottom"></div>
+  <div class="boot__seam"></div>
+
+  <div class="boot__core">
+    <div class="boot__scan"></div>
+
+    <svg class="boot__reticle" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+      <circle class="ret-ring" cx="100" cy="100" r="82" stroke-width="1"/>
+      <g class="ret-spin">
+        <circle class="ret-ticks" cx="100" cy="100" r="72" stroke-width="6"
+                stroke-dasharray="2 16"/>
+      </g>
+      <polygon class="ret-hex" points="100,34 157,67 157,133 100,166 43,133 43,67"
+               stroke-width="1.5"/>
+      <path class="ret-cross" d="M100 14v28M100 158v28M14 100h28M158 100h28"
+            stroke-width="1.5"/>
+      <g class="ret-brackets">
+        <path d="M52 40H36v16M148 40h16v16M52 160H36v-16M148 160h16v-16" stroke-width="2"/>
+      </g>
+      <circle class="ret-core" cx="100" cy="100" r="4"/>
+    </svg>
+
+    <pre class="boot__log" aria-hidden="true"><span style="animation-delay:.30s">&gt; POWER PLANT ........ ULTRACOMPACT FUSION / ONLINE</span>
+<span style="animation-delay:.46s">&gt; NEURO-LINK ......... SYNCHRONIZED</span>
+<span style="animation-delay:.62s">&gt; PANORAMIC COCKPIT .. DEPLOYING</span>
+<span style="animation-delay:.78s">&gt; OS ................. G.U.N.P.L.A. // GENERAL UNIFIED</span>
+<span style="animation-delay:.94s">                       NOTATION &amp; PARTS LOGISTICS ARCHIVE</span>
+<span style="animation-delay:1.10s">&gt; ARMORY DATABASE .... MOUNTED</span>
+<span style="animation-delay:1.26s">&gt; PILOT .............. JOBERT</span></pre>
+
+    <div class="boot__title" aria-hidden="true"><span style="animation-delay:2.00s">G</span><span style="animation-delay:2.06s">U</span><span style="animation-delay:2.12s">N</span><span style="animation-delay:2.18s">P</span><span style="animation-delay:2.24s">L</span><span style="animation-delay:2.30s">A</span><span class="sp"></span><span style="animation-delay:2.42s">R</span><span style="animation-delay:2.48s">E</span><span style="animation-delay:2.54s">G</span><span style="animation-delay:2.60s">I</span><span style="animation-delay:2.66s">S</span><span style="animation-delay:2.72s">T</span><span style="animation-delay:2.78s">R</span><span style="animation-delay:2.84s">Y</span></div>
+
+    <div class="boot__ready">ALL SYSTEMS GREEN</div>
+  </div>
+
+  <button class="boot__skip" id="boot-skip" type="button">SKIP ▸</button>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app" class="app">
+
+  <header class="topbar">
+    <div class="topbar__brand">
+      <svg class="emblem" viewBox="0 0 40 40" aria-hidden="true">
+        <polygon points="20,2 36,11 36,29 20,38 4,29 4,11" class="em-outer"/>
+        <polygon points="20,9 30,15 30,25 20,31 10,25 10,15" class="em-inner"/>
+        <path d="M20 9v22M10 15l20 10M30 15L10 25" class="em-lines"/>
+      </svg>
+      <div>
+        <h1>GUNPLA REGISTRY</h1>
+        <p>MS DEPLOYMENT &amp; BUILD STATUS LOG</p>
+      </div>
+    </div>
+    <div class="topbar__status">
+      <span class="led led--on"></span>
+      <span id="link-status">LINK ESTABLISHED</span>
+      <span class="topbar__clock" id="clock">--:--:--</span>
+    </div>
+  </header>
+
+  <section class="stats" id="stats">
+    <div class="stat stat--total">
+      <span class="stat__label">TOTAL UNITS</span>
+      <span class="stat__value" id="stat-total">0</span>
+    </div>
+    <div class="stat stat--owned">
+      <span class="stat__label">STASH / BACKLOG</span>
+      <span class="stat__value" id="stat-backlog">0</span>
+    </div>
+    <div class="stat stat--building">
+      <span class="stat__label">IN PROGRESS</span>
+      <span class="stat__value" id="stat-building">0</span>
+    </div>
+    <div class="stat stat--built">
+      <span class="stat__label">COMPLETED</span>
+      <span class="stat__value" id="stat-built">0</span>
+    </div>
+    <div class="stat stat--spent">
+      <span class="stat__label">TOTAL SPENT</span>
+      <span class="stat__value" id="stat-spent">₱0</span>
+    </div>
+    <div class="stat stat--wish">
+      <span class="stat__label">WISHLIST VALUE</span>
+      <span class="stat__value" id="stat-wishlist">₱0</span>
+    </div>
+  </section>
+
+  <section class="clear-rate" id="clear-rate-wrap">
+    <div class="clear-rate__head">
+      <span>BUILD CLEAR RATE</span>
+      <span id="clear-rate-pct">—</span>
+    </div>
+    <div class="clear-rate__bar"><div class="clear-rate__fill" id="clear-rate-fill"></div></div>
+  </section>
+
+  <div class="controls">
+    <div class="search">
+      <span class="search__icon">⌕</span>
+      <input type="search" id="search" placeholder="SEARCH UNITS…  ( / )" autocomplete="off"
+             aria-label="Search kits by name, series, or grade">
+    </div>
+    <div class="tabs" id="tabs" role="tablist">
+      <button class="tab active" data-status="" role="tab" aria-selected="true">ALL <b id="c-all">0</b></button>
+      <button class="tab" data-status="wishlist" role="tab" aria-selected="false">WISHLIST <b id="c-wishlist">0</b></button>
+      <button class="tab" data-status="owned" role="tab" aria-selected="false">STASH <b id="c-owned">0</b></button>
+      <button class="tab" data-status="building" role="tab" aria-selected="false">BUILDING <b id="c-building">0</b></button>
+      <button class="tab" data-status="built" role="tab" aria-selected="false">BUILT <b id="c-built">0</b></button>
+    </div>
+    <select id="sort" class="sort" aria-label="Sort kits">
+      <option value="recent">NEWEST FIRST</option>
+      <option value="name">NAME A–Z</option>
+      <option value="grade">GRADE</option>
+      <option value="price-desc">PRICE HIGH→LOW</option>
+      <option value="price-asc">PRICE LOW→HIGH</option>
+    </select>
+    <button class="btn btn--deploy" id="btn-add" type="button">
+      <span class="plus">+</span> DEPLOY UNIT <kbd>N</kbd>
+    </button>
+  </div>
+
+  <main class="grid" id="grid" aria-live="polite"></main>
+
+  <div class="empty" id="empty" hidden>
+    <svg viewBox="0 0 64 64" class="empty__icon" aria-hidden="true">
+      <polygon points="32,4 58,18 58,46 32,60 6,46 6,18" fill="none" stroke-width="1.5"/>
+      <path d="M32 20v24M20 27l24 10M44 27L20 37" stroke-width="1.5"/>
+    </svg>
+    <p id="empty-msg">NO UNITS IN REGISTRY</p>
+    <p class="empty__sub" id="empty-sub">Deploy your first kit to begin the log.</p>
+  </div>
+
+  <footer class="footer">
+    <span>GUNPLA REGISTRY // LOCAL TAILNET NODE</span>
+    <button class="linkish" id="replay-boot" type="button">↻ replay boot sequence</button>
+  </footer>
+</div>
+
+<!-- ══════════ KIT FORM MODAL ══════════ -->
+<div class="backdrop" id="kit-backdrop" role="dialog" aria-modal="true" aria-labelledby="kit-title">
+  <div class="panel panel--form">
+    <div class="panel__head">
+      <span class="panel__corner"></span>
+      <h2 id="kit-title">DEPLOY NEW UNIT</h2>
+      <button class="panel__close" id="kit-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <form id="kit-form" class="form">
+      <input type="hidden" id="f-id">
+      <div class="field field--full">
+        <label class="field-label" for="f-name">UNIT DESIGNATION *</label>
+        <div class="lookup-row">
+          <input type="text" id="f-name" required placeholder="try: RG Sazabi" autocomplete="off">
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-lookup"
+                  title="Look this kit up on the Gunpla wiki — fills grade, scale, series and box art">
+            ⌕ LOOKUP
+          </button>
+        </div>
+        <div class="lookup-results" id="lookup-results" hidden></div>
+        <div class="lookup-picked" id="lookup-picked" hidden>
+          <img alt=""><span></span>
+          <button type="button" id="lookup-clear" aria-label="Discard lookup match">✕</button>
+        </div>
+      </div>
+
+      <label class="field">
+        <span>GRADE</span>
+        <select id="f-grade">
+          <option value="HG">HG — High Grade</option>
+          <option value="RG">RG — Real Grade</option>
+          <option value="MG">MG — Master Grade</option>
+          <option value="PG">PG — Perfect Grade</option>
+          <option value="SD">SD — Super Deformed</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>SCALE</span>
+        <input type="text" id="f-scale" placeholder="1/144" autocomplete="off">
+      </label>
+
+      <label class="field field--full">
+        <span>SERIES</span>
+        <input type="text" id="f-series" placeholder="Mobile Suit Gundam SEED" autocomplete="off">
+      </label>
+
+      <div class="field field--full">
+        <span>STATUS</span>
+        <div class="segmented" id="f-status-seg" role="radiogroup" aria-label="Build status">
+          <button type="button" data-val="wishlist" role="radio" aria-checked="false">WISHLIST</button>
+          <button type="button" data-val="owned" role="radio" aria-checked="false">STASH</button>
+          <button type="button" data-val="building" role="radio" aria-checked="false">BUILDING</button>
+          <button type="button" data-val="built" role="radio" aria-checked="false">BUILT</button>
+        </div>
+        <input type="hidden" id="f-status" value="wishlist">
+      </div>
+
+      <label class="field">
+        <span>MSRP (₱)</span>
+        <input type="number" step="0.01" min="0" id="f-msrp" placeholder="0.00">
+      </label>
+      <label class="field">
+        <span>PRICE PAID (₱)</span>
+        <input type="number" step="0.01" min="0" id="f-paid" placeholder="0.00">
+      </label>
+
+      <label class="field">
+        <span>STORE / SOURCE</span>
+        <input type="text" id="f-store" placeholder="ZeonHobby" autocomplete="off">
+      </label>
+      <label class="field">
+        <span>DATE ACQUIRED</span>
+        <input type="date" id="f-date">
+      </label>
+
+      <label class="field field--full">
+        <span>NOTES</span>
+        <textarea id="f-notes" rows="3" placeholder="Panel lining done. Waiting on topcoat…"></textarea>
+      </label>
+
+      <div class="form__actions">
+        <button type="button" class="btn btn--danger" id="btn-delete" hidden>DECOMMISSION</button>
+        <button type="button" class="btn btn--ghost" id="btn-cancel">CANCEL</button>
+        <button type="submit" class="btn btn--primary">SAVE UNIT</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════ DETAIL MODAL ══════════ -->
+<div class="backdrop" id="detail-backdrop" role="dialog" aria-modal="true" aria-labelledby="d-name">
+  <div class="panel panel--detail">
+    <div class="panel__head">
+      <span class="panel__corner"></span>
+      <h2 id="d-name">UNIT</h2>
+      <button class="panel__close" id="detail-close" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="detail">
+      <aside class="detail__spec">
+        <div class="spec-badges">
+          <span class="grade-tag" id="d-grade">HG</span>
+          <span class="status-chip" id="d-status">WISHLIST</span>
+        </div>
+        <dl id="d-specs"></dl>
+
+        <div class="detail__statusctl">
+          <span class="mini-label">SET STATUS</span>
+          <div class="segmented segmented--sm" id="d-status-seg" role="radiogroup" aria-label="Change status">
+            <button type="button" data-val="wishlist" role="radio" aria-checked="false">WISH</button>
+            <button type="button" data-val="owned" role="radio" aria-checked="false">STASH</button>
+            <button type="button" data-val="building" role="radio" aria-checked="false">BUILD</button>
+            <button type="button" data-val="built" role="radio" aria-checked="false">DONE</button>
+          </div>
+        </div>
+
+        <div class="detail__buttons">
+          <button class="btn btn--ghost" id="btn-edit" type="button">EDIT</button>
+          <a class="btn btn--ghost" id="btn-price" target="_blank" rel="noopener noreferrer">CHECK PRICE ↗</a>
+        </div>
+      </aside>
+
+      <section class="detail__gallery">
+        <div class="mini-label">VISUAL RECORD</div>
+        <div class="photos" id="photos"></div>
+        <form id="photo-form" class="dropzone" id-drop="1">
+          <input type="file" id="photo-file" accept="image/*" hidden>
+          <div class="dropzone__inner" id="dropzone">
+            <span class="dropzone__hint">DROP IMAGE · PASTE · <b>BROWSE</b></span>
+            <div class="dropzone__preview" id="drop-preview" hidden><img alt=""><span></span></div>
+          </div>
+          <div class="dropzone__row">
+            <input type="text" id="photo-caption" placeholder="caption (optional)" autocomplete="off">
+            <label class="check"><input type="checkbox" id="photo-boxart"> box art</label>
+            <button type="submit" class="btn btn--primary btn--sm" id="btn-upload" disabled>UPLOAD</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ LIGHTBOX ══════════ -->
+<div class="backdrop backdrop--dark" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <button class="lightbox__close" id="lightbox-close" type="button" aria-label="Close">✕</button>
+  <figure class="lightbox__fig">
+    <img id="lightbox-img" alt="">
+    <figcaption id="lightbox-cap"></figcaption>
+  </figure>
+</div>
+
+<!-- ══════════ CONFIRM ══════════ -->
+<div class="backdrop" id="confirm-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="confirm-msg">
+  <div class="panel panel--confirm">
+    <div class="panel__head panel__head--alert">
+      <span class="panel__corner"></span>
+      <h2>⚠ CONFIRM ACTION</h2>
+    </div>
+    <p id="confirm-msg"></p>
+    <div class="form__actions">
+      <button class="btn btn--ghost" id="confirm-no" type="button">ABORT</button>
+      <button class="btn btn--danger" id="confirm-yes" type="button">CONFIRM</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<template id="card-tpl">
+  <article class="card" tabindex="0" role="button">
+    <div class="card__frame">
+      <img class="card__img" alt="">
+      <div class="card__noart"><svg viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,6 56,19 56,45 32,58 8,45 8,19" fill="none" stroke-width="1.5"/><path d="M32 21v22M21 27l22 9M43 27L21 36" stroke-width="1.5"/></svg><span>NO VISUAL</span></div>
+      <span class="card__grade"></span>
+      <span class="card__photos"></span>
+      <div class="card__brackets"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="card__body">
+      <h3 class="card__name"></h3>
+      <div class="card__meta"></div>
+      <div class="card__foot">
+        <span class="card__status"><span class="led"></span><em></em></span>
+        <span class="card__price"></span>
+      </div>
+    </div>
+  </article>
+</template>
+
+<script src="app.js"></script>
+</body>
+</html>
