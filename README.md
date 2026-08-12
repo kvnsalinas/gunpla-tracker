@@ -9,6 +9,23 @@ Flask + SQLite, no framework, no CDN, no external services — clone it and run 
 
 ![status](https://img.shields.io/badge/stack-Flask%20%2B%20SQLite-3dfd9f?style=flat-square)
 ![deps](https://img.shields.io/badge/JS%20dependencies-0-3dfd9f?style=flat-square)
+![license](https://img.shields.io/badge/license-MIT-3dfd9f?style=flat-square)
+
+## Why this exists
+
+I collect Gunpla and I lose track of it. Which kits are in the stash, which
+one I'm mid-build on, what I actually paid versus what the box says, and
+whether I already own the thing I'm about to buy again. A spreadsheet handles
+none of that well once photos are involved.
+
+It's open source because the interesting part turned out not to be the CRUD.
+It was discovering that **the obvious data source is the wrong one** — the
+Gundam wiki catalogues fictional mobile suits, not the plastic on your shelf —
+and then that **the right wiki's search index is missing real kits**, which no
+amount of better queries can fix. Both problems are written up below with the
+evidence, because anyone else building a Gunpla tool will hit them and the
+failure mode is silent: you get plausible results and never notice the kit you
+own isn't among them.
 
 ## Features
 
