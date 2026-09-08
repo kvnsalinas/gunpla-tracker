@@ -683,7 +683,7 @@ function setAuthMode(mode) {
   const signup = mode === 'signup';
   $('auth-title').textContent = signup ? 'PILOT REGISTRATION' : 'PILOT AUTHENTICATION';
   $('auth-blurb').textContent = signup
-    ? 'Pick a callsign and an access code. No email, no confirmation — you are in as soon as you register.'
+    ? 'Pick a callsign and a password. No email, no confirmation — you are in as soon as you register.'
     : "Identify yourself to open your hangar. Each pilot's registry is their own.";
   $('auth-submit').textContent = signup ? '▸ REGISTER' : '▸ AUTHENTICATE';
   $('auth-toggle').textContent = signup ? 'HAVE AN ACCOUNT?' : 'NEED AN ACCOUNT?';
