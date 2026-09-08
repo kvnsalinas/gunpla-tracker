@@ -667,7 +667,8 @@ body::before {
   cursor: pointer; font-size: .8rem; padding: 0 .3rem;
 }
 .lookup-picked button:hover { color: var(--danger); border-color: var(--danger); }
-input[type=text], input[type=number], input[type=date], input[type=search], select, textarea {
+input[type=text], input[type=number], input[type=date], input[type=search],
+input[type=password], select, textarea {
   background: var(--void); border: 1px solid var(--line); color: var(--text);
   font-family: var(--body); font-size: 12px;
   padding: .5rem .55rem; width: 100%;
@@ -834,4 +835,39 @@ input::placeholder, textarea::placeholder { color: var(--text-3); }
     transition-duration: .001ms !important;
   }
   .boot { display: none !important; }
+}
+
+/* ── access gate ──
+   Reuses .backdrop/.panel/.field/.btn wholesale; only the bits the gate
+   needs that no other modal does live here. */
+
+/* The gate outranks the boot sequence: if you aren't signed in there is
+   nothing behind it worth animating over. */
+.backdrop--gate { z-index: 1100; }
+
+.panel--auth { max-width: 420px; }
+
+/* Single column — two side-by-side credential fields read as a form to
+   skim past rather than one to fill in. */
+.form--auth { grid-template-columns: 1fr; }
+
+.auth__blurb {
+  grid-column: 1 / -1;
+  margin: 0 0 .2rem; font-size: 11px; line-height: 1.6;
+  color: var(--text-3); letter-spacing: .04em;
+}
+
+.auth__err {
+  grid-column: 1 / -1;
+  margin: 0; padding: .5rem .6rem;
+  border: 1px solid var(--danger); color: var(--danger);
+  background: rgba(255,71,87,.08);
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+}
+
+.topbar__pilot { color: var(--amber); }
+
+/* The topbar is tight on a phone; the callsign is the part worth keeping. */
+@media (max-width: 560px) {
+  #btn-logout { padding: .3rem .5rem; }
 }

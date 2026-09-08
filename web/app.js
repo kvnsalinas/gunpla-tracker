@@ -38,6 +38,12 @@ async function api(path, opts) {
   const res = await fetch(path, opts);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    // Every call funnels through here, so one check covers session expiry
+    // across the whole app.
+    if (res.status === 401) {
+      showGate('SESSION EXPIRED — SIGN IN AGAIN');
+      throw new Error('SESSION EXPIRED');
+    }
     throw new Error(body.error || `HTTP ${res.status}`);
   }
   return res.json();
@@ -92,6 +98,8 @@ function anyModalOpen() { return document.querySelector('.backdrop.open'); }
 document.querySelectorAll('.backdrop').forEach((bd) => {
   bd.addEventListener('mousedown', (e) => {
     if (e.target !== bd) return;
+    // The access gate is the one modal you can't click your way out of.
+    if (bd.id === 'auth-backdrop') return;
     if (bd.id === 'confirm-backdrop') { settleConfirm(false); return; }
     closeModal(bd);
   });
@@ -597,6 +605,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const open = anyModalOpen();
     if (open) {
+      if (open.id === 'auth-backdrop') return;   // not dismissible
       if (open.id === 'confirm-backdrop') settleConfirm(false);
       else { closeModal(open); if (open.id === 'detail-backdrop') detailId = null; }
     }
@@ -650,13 +659,131 @@ $('replay-boot').addEventListener('click', () => {
   playBoot();
 });
 
-// Once per browser session — an opening when you sit down, not a
-// replay on every refresh while you're logging kits.
-if (!reduced && !sessionStorage.getItem('booted')) {
+function maybePlayBoot() {
+  // Once per browser session — an opening when you sit down, not a
+  // replay on every refresh while you're logging kits.
+  if (reduced || sessionStorage.getItem('booted')) return;
   sessionStorage.setItem('booted', '1');
   playBoot();
 }
 
+/* ─────────── auth ─────────── */
+
+let authMode = 'login';   // or 'signup'
+
+function authError(msg) {
+  const el = $('auth-err');
+  if (!msg) { el.hidden = true; el.textContent = ''; return; }
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const signup = mode === 'signup';
+  $('auth-title').textContent = signup ? 'PILOT REGISTRATION' : 'PILOT AUTHENTICATION';
+  $('auth-blurb').textContent = signup
+    ? 'Pick a callsign and an access code. No email, no confirmation — you are in as soon as you register.'
+    : "Identify yourself to open your hangar. Each pilot's registry is their own.";
+  $('auth-submit').textContent = signup ? '▸ REGISTER' : '▸ AUTHENTICATE';
+  $('auth-toggle').textContent = signup ? 'HAVE AN ACCOUNT?' : 'NEED AN ACCOUNT?';
+  $('a-invite-field').hidden = !signup;
+  $('a-password').autocomplete = signup ? 'new-password' : 'current-password';
+  authError('');
+}
+
+function showGate(msg) {
+  $('topbar-pilot').hidden = true;
+  $('btn-logout').hidden = true;
+  // Nothing behind the gate should be readable once the session is gone.
+  KITS = [];
+  renderStats();
+  renderGrid();
+  document.querySelectorAll('.backdrop.open').forEach((bd) => bd.classList.remove('open'));
+  $('auth-backdrop').classList.add('open');
+  authError(msg || '');
+  setTimeout(() => $('a-username').focus(), 40);
+}
+
+function hideGate() {
+  $('auth-backdrop').classList.remove('open');
+  $('auth-form').reset();
+  authError('');
+}
+
+async function enter(user) {
+  const callsign = (user.display_name || user.username).toUpperCase();
+  $('boot-pilot').textContent = callsign;
+  $('topbar-pilot').textContent = callsign;
+  $('topbar-pilot').hidden = false;
+  $('btn-logout').hidden = false;
+  hideGate();
+  maybePlayBoot();
+  await loadAll();
+}
+
+$('auth-toggle').addEventListener('click', () => {
+  setAuthMode(authMode === 'login' ? 'signup' : 'login');
+});
+
+$('auth-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('auth-submit');
+  const username = $('a-username').value.trim();
+  const password = $('a-password').value;
+  if (!username || !password) return;
+
+  const body = { username, password };
+  if (authMode === 'signup') {
+    const code = $('a-invite').value.trim();
+    if (code) body.code = code;
+  }
+
+  btn.disabled = true;
+  authError('');
+  try {
+    const res = await fetch(`/api/auth/${authMode}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { authError(data.error || `HTTP ${res.status}`); return; }
+    await enter(data);
+    toast(authMode === 'signup' ? 'HANGAR REGISTERED' : 'LINK ESTABLISHED');
+  } catch (err) {
+    authError(err.message || 'CONNECTION FAILED');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$('btn-logout').addEventListener('click', async () => {
+  // Only the boot animation is per-session; clearing this means the next
+  // pilot to sign in on this browser gets the opening too.
+  sessionStorage.removeItem('booted');
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } finally {
+    setAuthMode('login');
+    showGate('');
+  }
+});
+
 /* ─────────── go ─────────── */
 
-guard(loadAll);
+async function start() {
+  setAuthMode('login');
+  let user = null;
+  try {
+    const res = await fetch('/api/auth/me');
+    if (res.ok) user = await res.json();
+  } catch {
+    // offline or the Worker is down; the gate explains itself below
+  }
+
+  if (!user) { showGate(''); return; }
+  await guard(() => enter(user));
+}
+
+start();

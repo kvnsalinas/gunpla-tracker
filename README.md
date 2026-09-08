@@ -1,14 +1,15 @@
 # GUNPLA REGISTRY
 
 A cockpit-HUD themed collection and build-status tracker for Gundam model kits.
-Flask + SQLite, no framework, no CDN, no external services — clone it and run it.
+Runs on Cloudflare Workers with D1 and R2. Multi-user: every pilot signs in and
+sees only their own hangar. No frontend framework, no CDN, no build step.
 
 > Track what you own, what you're building, what you've finished, and what's
 > still on the wishlist. Plus the number every gunpla builder pretends not to
 > think about: your **build clear rate**.
 
-![status](https://img.shields.io/badge/stack-Flask%20%2B%20SQLite-3dfd9f?style=flat-square)
-![deps](https://img.shields.io/badge/JS%20dependencies-0-3dfd9f?style=flat-square)
+![status](https://img.shields.io/badge/stack-Workers%20%2B%20D1%20%2B%20R2-3dfd9f?style=flat-square)
+![deps](https://img.shields.io/badge/frontend%20dependencies-0-3dfd9f?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-3dfd9f?style=flat-square)
 
 ## Why this exists
@@ -29,6 +30,10 @@ own isn't among them.
 
 ## Features
 
+- **Private per-pilot registries** — sign up with a callsign and a password and
+  your collection is yours alone. No email, no confirmation step, nothing to
+  verify. Every query is scoped to the signed-in user, and another account
+  asking for your kit gets a 404, not a 403.
 - **Kit lookup with box art** — type `RG Sazabi`, hit LOOKUP, pick from the
   results. Grade, scale, series, JP retail price and the official **box art**
   are filled in for you. See [below](#where-the-kit-data-comes-from).
@@ -54,47 +59,70 @@ own isn't among them.
 - **Keyboard driven** — `N` new unit, `/` search, `Esc` close.
 - **Responsive** — 6-across on desktop, 2-across on a phone at the workbench.
 
-## Running it
+## Running it locally
 
 ```bash
-pip install -r requirements.txt
-python3 app.py
+npm install
+npx wrangler d1 create gunpla        # paste the printed id into wrangler.toml
+npm run db:migrate:local
+npm run dev
 ```
 
-Then open **http://localhost:6060**.
+Then open **http://localhost:8787** and register a pilot. `wrangler dev` runs
+the real Worker against a local D1 and R2, so local behaviour matches
+production — there is no separate dev server to keep in sync.
 
-Want demo data to look at first?
+Want demo data to look at first? The seeder emits SQL for one pilot, so
+register that account first:
 
 ```bash
-python3 scripts/seed_demo.py
+node scripts/seed-demo.mjs <username> > /tmp/seed.sql
+npx wrangler d1 execute gunpla --local --file=/tmp/seed.sql
 ```
 
-(`--reset` wipes all kits before inserting. It deletes *everything*, not just
-demo rows.)
+(`--reset` wipes that pilot's kits before inserting. It deletes *everything*
+they own, not just demo rows. Other pilots are untouched.)
 
-## Running it as a service (Linux, systemd)
+## Deploying it
 
 ```bash
-systemctl --user enable --now gunpla-tracker
+npx wrangler r2 bucket create gunpla-photos
+npm run db:migrate:remote
+npx wrangler secret put SIGNUP_CODE   # optional, see below
+npx wrangler deploy
 ```
 
-See [`deploy/gunpla-tracker.service`](deploy/gunpla-tracker.service) — copy it
-to `~/.config/systemd/user/` and set `WorkingDirectory` and the interpreter
-path. Use an **absolute** interpreter path; if you use pyenv, point at
-`~/.pyenv/versions/<v>/bin/python3`, not the shim, since systemd doesn't build
-PATH the way a login shell does.
+That publishes to `https://gunpla-tracker.<your-subdomain>.workers.dev`. The
+free tier covers a personal registry comfortably — D1 gives 5 GB of storage,
+R2 gives 10 GB, and photos are the only thing that grows.
+
+To put it on your own domain, add a route in `wrangler.toml` for a zone on
+your Cloudflare account.
 
 ## A note on security
 
-`app.py` binds `0.0.0.0` so you can reach it from your phone over a private
-network (I use [Tailscale](https://tailscale.com) — handy for uploading WIP
-photos straight from the workbench).
+The app is built to be reachable from the public internet, which the previous
+Flask version explicitly was not.
 
-**There is no authentication.** Anyone who can reach the port can read, edit,
-and delete your collection and upload files. Keep it on a private network or
-tailnet. Do not port-forward it or put it behind a public tunnel without
-putting real auth in front of it first. To lock it to the local machine only,
-change `HOST` in `app.py` to `127.0.0.1`.
+- **Passwords** are hashed with PBKDF2-SHA256 (100k iterations, per-user salt)
+  via WebCrypto. The stored format carries its own iteration count, so the cost
+  can be raised later without invalidating existing passwords.
+- **Sessions** are opaque 256-bit random tokens in an `HttpOnly; Secure;
+  SameSite=Lax` cookie, with the authoritative record in D1 — so signing out
+  actually revokes the session rather than just dropping the cookie.
+- **Isolation** is enforced in the `WHERE` clause of every query, never as a
+  separate ownership check that a new route could forget. Photos are served
+  through the Worker rather than from a public bucket, so an R2 key alone
+  doesn't grant access.
+- **Signup** is open by default. If you'd rather it not be, set a
+  `SIGNUP_CODE` secret and registration requires it:
+
+  ```bash
+  npx wrangler secret put SIGNUP_CODE
+  ```
+
+  With no secret set, anyone who finds the URL can create an account. For a
+  registry shared with a couple of friends, set one.
 
 ## Where the kit data comes from
 
@@ -120,9 +148,9 @@ It also can't be detected by "did we get good results?". Searching
 looks like success, while the PG entry you actually own is missing.
 
 So the lookup keeps a **local index of every article on the wiki** (~2,500
-titles, six-hour cache, ~11s to warm up, then ~2s per query) and ranks against
-that, merging in full-text results for content matches. Coverage no longer
-depends on what Fandom indexed.
+titles, six-hour cache in the Workers Cache API, ~11s to warm up, then ~2s per
+query) and ranks against that, merging in full-text results for content
+matches. Coverage no longer depends on what Fandom indexed.
 
 Ranking then has to survive titles carrying a model number you'd never type
 (`MG Wing Zero EW Ver Ka` → `MG XXXG-00W0 Wing Gundam Zero EW (Ver.Ka)`):
@@ -155,9 +183,10 @@ PRICE** link that opens a search for that kit's name.
 ### Fetching images safely
 
 Box art is downloaded server-side, which makes the import endpoint an SSRF
-surface: the URL arrives over the wire. `lookup.py` allowlists the wiki's CDN
-host, re-checks **every redirect hop** against that allowlist, requires an
-image content-type, and caps downloads at 8 MB.
+surface: the URL arrives over the wire. `worker/lookup.ts` allowlists the
+wiki's CDN host, follows redirects manually so it can re-check **every hop**
+against that allowlist, requires an image content-type, and caps downloads at
+8 MB.
 
 Images are fetched from the wiki at runtime; none are redistributed in this
 repository.
@@ -166,8 +195,15 @@ repository.
 
 | Table | Purpose |
 |---|---|
-| `kits` | name, grade, scale, series, status, MSRP, price paid, store, date acquired, notes |
-| `photos` | many per kit; `is_box_art` picks the card thumbnail; `ON DELETE CASCADE` |
+| `users` | callsign, display name, PBKDF2 password hash |
+| `sessions` | one row per sign-in; deleted on logout and swept when expired |
+| `kits` | `user_id` owner, plus name, grade, scale, series, status, MSRP, price paid, store, date acquired, notes |
+| `photos` | many per kit; `filename` is an R2 object key; `is_box_art` picks the card thumbnail |
+
+Photos reach ownership through their kit rather than carrying a `user_id` of
+their own, so there is exactly one place a kit can change hands. Deletes cascade
+in application code rather than via `ON DELETE CASCADE`: D1 doesn't reliably
+enforce it across statements, and the R2 blobs need cleaning up regardless.
 
 There's deliberately no build-log timeline yet — status plus a photo gallery
 covers the common case. If per-session WIP notes become useful, that's a
@@ -177,18 +213,23 @@ detail view.
 ## Layout
 
 ```
-app.py               Flask API + static serving
-db.py                schema, connection helper (stdlib sqlite3)
-lookup.py            gunpla.fandom.com client + SSRF-guarded image fetch
-scripts/seed_demo.py demo rows for screenshots
-deploy/              systemd unit template
-web/index.html       single page
-web/style.css        the cockpit design system
-web/app.js           ~450 lines, no dependencies
-web/fonts/           self-hosted VT323 (OFL)
-data/gunpla.db       your collection (gitignored)
-data/uploads/        your photos (gitignored)
+wrangler.toml          Worker config: D1, R2 and static-asset bindings
+worker/index.ts        router; /api/* and /uploads/*, else the static site
+worker/auth.ts         signup, login, sessions, PBKDF2 hashing
+worker/kits.ts         kit + photo routes, all scoped to the signed-in user
+worker/lookup.ts       gunpla.fandom.com client + SSRF-guarded image fetch
+worker/db.ts           shared types, constants, field coercion
+migrations/            D1 schema
+scripts/seed-demo.mjs  demo rows for screenshots
+web/index.html         single page
+web/style.css          the cockpit design system
+web/app.js             no dependencies, no build step
+web/fonts/             self-hosted VT323 (OFL)
 ```
+
+The Worker is TypeScript; the frontend is deliberately still plain ES5-era
+browser JS served verbatim, with no bundler between what's in the repo and what
+the browser runs.
 
 ### Design notes
 

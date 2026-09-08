@@ -1,6 +1,7 @@
 .venv/
 __pycache__/
 *.pyc
-data/gunpla.db
-data/uploads/*
-!data/uploads/.gitkeep
+
+node_modules/
+.wrangler/
+.dev.vars
