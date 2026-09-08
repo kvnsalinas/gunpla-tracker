@@ -12,8 +12,7 @@ run_worker_first = true
 [[d1_databases]]
 binding = "DB"
 database_name = "gunpla"
-# Replace with the id printed by: wrangler d1 create gunpla
-database_id = "00000000-0000-0000-0000-000000000000"  # replace with the id from: wrangler d1 create gunpla
+database_id = "c112cf2b-4475-4acb-a757-0d846aaada8e"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
