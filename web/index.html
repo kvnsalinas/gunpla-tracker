@@ -43,7 +43,7 @@
 <span style="animation-delay:.78s">&gt; OS ................. G.U.N.P.L.A. // GENERAL UNIFIED</span>
 <span style="animation-delay:.94s">                       NOTATION &amp; PARTS LOGISTICS ARCHIVE</span>
 <span style="animation-delay:1.10s">&gt; ARMORY DATABASE .... MOUNTED</span>
-<span style="animation-delay:1.26s">&gt; PILOT .............. JOBERT</span></pre>
+<span style="animation-delay:1.26s">&gt; PILOT .............. <span id="boot-pilot">PILOT</span></span></pre>
 
     <div class="boot__title" aria-hidden="true"><span style="animation-delay:2.00s">G</span><span style="animation-delay:2.06s">U</span><span style="animation-delay:2.12s">N</span><span style="animation-delay:2.18s">P</span><span style="animation-delay:2.24s">L</span><span style="animation-delay:2.30s">A</span><span class="sp"></span><span style="animation-delay:2.42s">R</span><span style="animation-delay:2.48s">E</span><span style="animation-delay:2.54s">G</span><span style="animation-delay:2.60s">I</span><span style="animation-delay:2.66s">S</span><span style="animation-delay:2.72s">T</span><span style="animation-delay:2.78s">R</span><span style="animation-delay:2.84s">Y</span></div>
 
@@ -51,6 +51,49 @@
   </div>
 
   <button class="boot__skip" id="boot-skip" type="button">SKIP ▸</button>
+</div>
+
+<!-- ══════════ ACCESS GATE ══════════ -->
+<div class="backdrop backdrop--dark backdrop--gate" id="auth-backdrop"
+     role="dialog" aria-modal="true" aria-labelledby="auth-title">
+  <div class="panel panel--auth">
+    <div class="panel__head">
+      <span class="panel__corner"></span>
+      <h2 id="auth-title">PILOT AUTHENTICATION</h2>
+    </div>
+
+    <form id="auth-form" class="form form--auth" autocomplete="on">
+      <p class="auth__blurb" id="auth-blurb">
+        Identify yourself to open your hangar. Each pilot's registry is their own.
+      </p>
+
+      <label class="field field--full">
+        <span>CALLSIGN</span>
+        <input type="text" id="a-username" name="username" required
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="lowercase, 3-32 chars">
+      </label>
+
+      <label class="field field--full">
+        <span>ACCESS CODE</span>
+        <input type="password" id="a-password" name="password" required
+               autocomplete="current-password" placeholder="min. 8 characters">
+      </label>
+
+      <label class="field field--full" id="a-invite-field" hidden>
+        <span>SIGNUP CODE</span>
+        <input type="text" id="a-invite" autocomplete="off"
+               placeholder="ask the registry owner">
+      </label>
+
+      <p class="auth__err" id="auth-err" hidden></p>
+
+      <div class="form__actions">
+        <button type="button" class="btn btn--ghost" id="auth-toggle">NEED AN ACCOUNT?</button>
+        <button type="submit" class="btn btn--primary" id="auth-submit">▸ AUTHENTICATE</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- ══════════ APP ══════════ -->
@@ -72,6 +115,8 @@
       <span class="led led--on"></span>
       <span id="link-status">LINK ESTABLISHED</span>
       <span class="topbar__clock" id="clock">--:--:--</span>
+      <span class="topbar__pilot" id="topbar-pilot" hidden></span>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-logout" hidden>DISENGAGE</button>
     </div>
   </header>
 

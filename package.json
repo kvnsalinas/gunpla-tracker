@@ -1,0 +1,18 @@
+{
+  "name": "gunpla-tracker",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Gunpla collection tracker — Cloudflare Worker + D1 + R2",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply gunpla --local",
+    "db:migrate:remote": "wrangler d1 migrations apply gunpla --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260908.1",
+    "typescript": "^5.7.3",
+    "wrangler": "^4.129.1"
+  }
+}

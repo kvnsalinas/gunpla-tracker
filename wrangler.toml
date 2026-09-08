@@ -1,0 +1,21 @@
+name = "gunpla-tracker"
+main = "worker/index.ts"
+compatibility_date = "2025-01-15"
+
+# The Worker sees every request first (see `run_worker_first`), handles
+# /api/* and /uploads/*, and hands everything else to the static site in web/.
+[assets]
+directory = "./web"
+binding = "ASSETS"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gunpla"
+# Replace with the id printed by: wrangler d1 create gunpla
+database_id = "00000000-0000-0000-0000-000000000000"  # replace with the id from: wrangler d1 create gunpla
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "gunpla-photos"
